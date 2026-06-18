@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../database/week_entry_repository.dart';
+import '../models/week.dart';
 import '../models/week_entry.dart';
 import '../widgets/ledger_table_layout.dart';
 import '../widgets/ledger_table_row.dart';
 
 class WeekLedgerScreen extends StatefulWidget {
-  const WeekLedgerScreen({super.key});
+  final Week week;
+
+  const WeekLedgerScreen({super.key, required this.week});
 
   @override
   State<WeekLedgerScreen> createState() =>
@@ -21,6 +24,7 @@ class _WeekLedgerScreenState
   List<WeekEntry> entries = [];
   double totalCredit = 0;
   double totalDebit = 0;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -29,9 +33,10 @@ class _WeekLedgerScreenState
   }
 
   Future<void> loadLedger() async {
+    setState(() => _isLoading = true);
     final results = await Future.wait([
-      repository.getEntries(),
-      repository.getTotals(),
+      repository.getEntries(weekId: widget.week.id),
+      repository.getTotals(weekId: widget.week.id),
     ]);
 
     if (!mounted) return;
@@ -43,6 +48,7 @@ class _WeekLedgerScreenState
       entries = results[0] as List<WeekEntry>;
       totalCredit = totals['totalCredit'] ?? 0;
       totalDebit = totals['totalDebit'] ?? 0;
+      _isLoading = false;
     });
   }
 
@@ -110,6 +116,7 @@ class _WeekLedgerScreenState
           ElevatedButton(
             onPressed: () async {
               await repository.insertEntry(
+                weekId: widget.week.id,
                 description:
                     descriptionController
                         .text,
@@ -211,7 +218,6 @@ class _WeekLedgerScreenState
 
   Future<void> deleteEntry(int id) async {
     await repository.deleteEntry(id);
-
     await loadLedger();
   }
 
@@ -226,7 +232,7 @@ class _WeekLedgerScreenState
     return Scaffold(
       appBar: AppBar(
         title:
-            const Text('Week Ledger'),
+            Text('Ledger: ${widget.week.title}'),
       ),
       floatingActionButton:
           FloatingActionButton(
@@ -241,56 +247,60 @@ class _WeekLedgerScreenState
             12,
             12 + bottomFabPadding,
           ),
-          child: Column(
-            children: [
-              Container(
-                color: Colors.grey[200],
-                child: const LedgerTableHeader(
-                  showDate: false,
-                ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount:
-                      entries.length,
-                  itemBuilder:
-                      (context, index) {
-                    final entry =
-                        entries[index];
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                  children: [
+                    Container(
+                      color: Colors.grey[200],
+                      child: const LedgerTableHeader(
+                        showDate: false,
+                      ),
+                    ),
+                    Expanded(
+                      child: entries.isEmpty
+                          ? const Center(child: Text('No entries for this week.'))
+                          : ListView.builder(
+                              itemCount:
+                                  entries.length,
+                              itemBuilder:
+                                  (context, index) {
+                                final entry =
+                                    entries[index];
 
-                    return WeekLedgerTableRow(
-                      description:
-                          entry.description,
-                      credit: entry.credit,
-                      debit: entry.debit,
-                      onEdit: () {
-                        editEntry(entry);
-                      },
-                      onDelete: () {
-                        deleteEntry(
-                          entry.id!,
-                        );
-                      },
-                    );
-                  },
+                                return WeekLedgerTableRow(
+                                  description:
+                                      entry.description,
+                                  credit: entry.credit,
+                                  debit: entry.debit,
+                                  onEdit: () {
+                                    editEntry(entry);
+                                  },
+                                  onDelete: () {
+                                    deleteEntry(
+                                      entry.id!,
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                    ),
+                    const Divider(height: 1),
+                    summaryRow(
+                      'Total Credit',
+                      totalCredit,
+                    ),
+                    summaryRow(
+                      'Total Debit',
+                      totalDebit,
+                    ),
+                    const Divider(height: 1),
+                    summaryRow(
+                      'Net Profit',
+                      netProfit,
+                    ),
+                  ],
                 ),
-              ),
-              const Divider(height: 1),
-              summaryRow(
-                'Total Credit',
-                totalCredit,
-              ),
-              summaryRow(
-                'Total Debit',
-                totalDebit,
-              ),
-              const Divider(height: 1),
-              summaryRow(
-                'Net Profit',
-                netProfit,
-              ),
-            ],
-          ),
         ),
       ),
     );

@@ -24,10 +24,16 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
+      onConfigure: _onConfigure,
     );
+  }
+
+  Future<void> _onConfigure(Database db) async {
+    // Enables SQLite ON DELETE CASCADE enforcement
+    await db.execute('PRAGMA foreign_keys = ON');
   }
 
   Future<void> _onCreate(
@@ -58,8 +64,8 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE weeks(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        startDate TEXT,
-        endDate TEXT
+        startDate TEXT NOT NULL,
+        endDate TEXT NOT NULL
       )
     ''');
 
@@ -69,9 +75,14 @@ class DatabaseHelper {
         weekId INTEGER,
         description TEXT,
         credit REAL DEFAULT 0,
-        debit REAL DEFAULT 0
+        debit REAL DEFAULT 0,
+        FOREIGN KEY (weekId) REFERENCES weeks (id) ON DELETE CASCADE
       )
     ''');
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_week_entries_weekId ON week_entries(weekId)',
+    );
   }
 
   Future<void> _onUpgrade(
@@ -85,6 +96,12 @@ class DatabaseHelper {
       );
       await db.execute(
         'ALTER TABLE customers ADD COLUMN notes TEXT',
+      );
+    }
+    if (oldVersion < 3) {
+      // Re-create week_entries if needed to enforce foreign key constraint or add index
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_week_entries_weekId ON week_entries(weekId)',
       );
     }
   }
