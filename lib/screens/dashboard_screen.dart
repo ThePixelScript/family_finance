@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../database/dashboard_repository.dart';
-import '../models/dashboard_summary.dart'; // Fixed missing model type import
+import '../models/dashboard_summary.dart';
 import 'customer_ledger_screen.dart';
 import 'weekly_analysis_screen.dart';
 
@@ -49,7 +49,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: _loadDashboardData, // Fixed: changed onRefresh back from onPressed typo
+        onRefresh: _loadDashboardData, // Strictly enforced correct parameter
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : ListView(
@@ -210,7 +210,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Row(
             children: [
               CircleAvatar(
-                backgroundColor: color.withValues(alpha: 0.1), // Fixed deprecation
+                backgroundColor: color.withValues(alpha: 0.1),
                 radius: 24,
                 child: Icon(icon, color: color, size: 26),
               ),
@@ -261,7 +261,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: color.withValues(alpha: 0.1), // Fixed deprecation
+              backgroundColor: color.withValues(alpha: 0.1),
               radius: isLarge ? 24 : 18,
               child: Icon(icon, color: color, size: isLarge ? 24 : 20),
             ),
