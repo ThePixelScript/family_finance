@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'screens/dashboard_screen.dart';
 
 void main() {
-  runApp(const FamilyFinanceApp());
+  runApp(const MyApp());
 }
 
-class FamilyFinanceApp extends StatelessWidget {
-  const FamilyFinanceApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'Family Finance',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,
-        colorSchemeSeed: Colors.green,
       ),
       home: const DashboardScreen(),
     );
